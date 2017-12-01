@@ -139,7 +139,7 @@ public class ComplaintsFragment extends Fragment {
     }
 
     public void initializeAdapter(){
-        RVAdapter adapter = new RVAdapter(complaints,this.getContext());
+        SecurityAdapter adapter = new SecurityAdapter(complaints,this.getContext());
         rv.setAdapter(adapter);
         timer.cancel();
     }

@@ -172,9 +172,9 @@ public class ComplaintActivity extends AppCompatActivity {
                             if (success) {
                                 Log.d("check", "" + obj);
                                 Toast.makeText(getApplicationContext(), "Upvoted!", Toast.LENGTH_LONG).show();
-                                finish();
                             } else {
-                                String errorString = "error";
+                                Count.setText(String.valueOf(count));
+                                String errorString = obj.getString("error");
                                 Toast.makeText(getApplicationContext(), errorString, Toast.LENGTH_LONG).show();
                             }
 
