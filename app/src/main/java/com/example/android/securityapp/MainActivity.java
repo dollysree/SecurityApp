@@ -25,7 +25,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     SharedPreferences.Editor edit;
     private SectionsPagerAdapter mSectionsPagerAdapter;
     private ViewPager mViewPager;
-    String username,roll_no;
+    String username,roll_no,hall;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -72,6 +72,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
         username=authentication.getString(Prefer.DISPLAY_NAME,null);
         roll_no=authentication.getString(Prefer.ROLL_NO,null);
+        hall=authentication.getString(Prefer.USER_HALL,null);
         nav_user.setText(username);
         nav_roll.setText(roll_no);
 
@@ -123,7 +124,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 case 0:
                     return "Security";
                 case 1:
-                    return "Hall";
+                    return authentication.getString(Prefer.USER_HALL,null)+" Hall";
             }
             return null;
         }
@@ -153,6 +154,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
              edit.remove(Prefer.USER_EMAIL);
              edit.remove(Prefer.USER_ROLE);
              edit.remove(Prefer.USER_LOGGED_IN);
+             edit.remove(Prefer.USER_HALL);
              edit.apply();
             Intent out=new Intent(MainActivity.this,LoginActivity.class);
             startActivity(out);

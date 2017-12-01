@@ -10,14 +10,18 @@ import android.support.v4.app.Fragment;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Toast;
 
+import com.android.volley.AuthFailureError;
 import com.android.volley.Request;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 
 import org.json.JSONArray;
@@ -48,6 +52,7 @@ public class HallComplaintsFragment extends Fragment {
     SharedPreferences login;
     SharedPreferences.Editor edit;
     String hall;
+    String url = "https://sreekana123.000webhostapp.com/api/gethallcomplaints";
 
     private static final String ARG_SECTION_NUMBER = "section_number";
     public static HallComplaintsFragment newInstance(int sectionNumber) {
@@ -75,15 +80,12 @@ public class HallComplaintsFragment extends Fragment {
         edit = login.edit();
         hall=login.getString(Prefer.USER_HALL,null);
 
-        json = getJSONFromInternet("https://sreekana123.000webhostapp.com/api/gethallcomplaints");
-
         timer=new CountDownTimer(4000,300){
             Snackbar snack;
             @Override
             public void onTick(long millisUntilFinished) {
                 if (gotJson) {
-                    initializeFeatured(json);
-                    initializeAdapter();
+                    getcomplaints();
                     mSwipeRefreshLayout.setRefreshing(false);
 
                 }
@@ -93,21 +95,21 @@ public class HallComplaintsFragment extends Fragment {
             {
                 if(gotJson)
                 {
-                    initializeFeatured(json);
-                    initializeAdapter();
+                    getcomplaints();
                     mSwipeRefreshLayout.setRefreshing(false);
 
                 }
-                else
-                    snack=Snackbar.make(rv,"Cannot connect",Snackbar.LENGTH_INDEFINITE);
-                snack.setAction("Refresh", new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        refreshview();
-                    }
-                });
-                snack.show();
-                mSwipeRefreshLayout.setRefreshing(false);
+                else {
+                    snack = Snackbar.make(rv, "Cannot connect", Snackbar.LENGTH_INDEFINITE);
+                    snack.setAction("Refresh", new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            refreshview();
+                        }
+                    });
+                    snack.show();
+                    mSwipeRefreshLayout.setRefreshing(false);
+                }
             }
         };
         timer.start();
@@ -119,78 +121,203 @@ public class HallComplaintsFragment extends Fragment {
                 refreshview();
             }
         });
-
+//        getcomplaints();
         return listv;
-    }
-    public void initializeFeatured(JSONObject json){
-        complaints = new ArrayList<Complaint>();
-        try {
-            JSONArray response = json.getJSONArray("hall");
-
-            for(int i=0;i<response.length();i++){
-                JSONObject currentC = response.getJSONObject(i);
-                String complaint_id = currentC.getString("complaint_id");
-                String title = currentC.getString("title");
-                String content = currentC.getString("content");
-                String date = currentC.getString("date");
-                String status = currentC.getString("status");
-                String complaint_by = currentC.getString("complaint_by");
-                int count = currentC.getInt("upvotes");
-//                int complaint_type = currentC.getInt("complaint_type");
-                String image = currentC.getString("image");
-
-                Complaint comp = new Complaint(title,content,status,complaint_by,date,complaint_id,count,image);
-                complaints.add(comp);
-            }
-
-        } catch (JSONException e) {
-            // If an error is thrown when executing any of the above statements in the "try" block,
-            // catch the exception here, so the app doesn't crash. Print a log message
-            // with the message from the exception.
-            e.printStackTrace();
-        }
-    }
-
-    public void initializeAdapter(){
-        RVAdapter adapter = new RVAdapter(complaints,this.getContext());
-        rv.setAdapter(adapter);
-        timer.cancel();
     }
 
     public void refreshview()
     {
-        json=getJSONFromInternet("https://sreekana123.000webhostapp.com/api/gethallcomplaints");
+        getcomplaints();
         timer.cancel();
         timer.start();
     }
-    public JSONObject getJSONFromInternet(String url)
-    {
+    private void getcomplaints() {
+        final String errorMsg;
 
-        Map<String, String> params = new HashMap<String, String>();
-        params.put("hall", hall);
-        JSONObject parameters = new JSONObject(params);
+        StringRequest stringRequest = new StringRequest(Request.Method.POST, url,
+                new Response.Listener<String>() {
 
-        JsonObjectRequest jsonRequest=new JsonObjectRequest(Request.Method.GET,url,null,
-                new Response.Listener<JSONObject>() {
                     @Override
-                    public void onResponse(JSONObject response) {
-                        json=response;
-                        gotJson=true;
-                    }
-                },
-                new Response.ErrorListener(){
-                    @Override
-                    public void onErrorResponse(VolleyError error){
+
+                    public void onResponse(String response) {
+                        gotJson =true;
                         try {
-                            json.put("success","false");
+                            Log.i("tins", response);
+                            complaints = new ArrayList<Complaint>();
+                            JSONObject obj = new JSONObject(response);
+                            Boolean success = obj.getBoolean("success");
+                            Log.d("success", success + "");
+                            if (success) {
+                                Log.d("check", "" + obj);
+                                JSONArray responsee = obj.getJSONArray("hall");
+                                for(int i=0;i<responsee.length();i++){
+                                    JSONObject currentC = responsee.getJSONObject(i);
+                                    String complaint_id = currentC.getString("complaint_id");
+                                    String title = currentC.getString("title");
+                                    String content = currentC.getString("content");
+                                    String date = currentC.getString("date");
+                                    String status = currentC.getString("status");
+                                    String complaint_by = currentC.getString("complaint_by");
+                                    int count = currentC.getInt("upvotes");
+                                    //                int complaint_type = currentC.getInt("complaint_type");
+                                    String image = currentC.getString("image");
+
+                                    Complaint comp = new Complaint(title,content,status,complaint_by,date,complaint_id,count,image);
+                                    complaints.add(comp);
+                                    RVAdapter adapter = new RVAdapter(complaints,getContext());
+                                    rv.setAdapter(adapter);
+                                }
+                            } else {
+//                                String errorString = "loding error";
+//                                Toast.makeText(getApplicationContext(), errorString, Toast.LENGTH_LONG).show();
+                            }
 
                         } catch (JSONException e) {
                             e.printStackTrace();
                         }
-                        error.printStackTrace();
+
+
                     }
-                });
-        Volley.newRequestQueue(getActivity()).add(jsonRequest.setShouldCache(false));
-        return json;
+                }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(final VolleyError error) {
+                Log.i("eeee", error.toString());
+//                Login.setEnabled(true);
+            }
+
+        }) {
+            @Override
+            protected Map<String, String> getParams() throws AuthFailureError {
+                Map<String, String> params = new HashMap<String, String>();
+                params.put("hall", hall);
+                Log.d("code", params.get("hall"));
+                return params;
+            }
+        };
+
+        Volley.newRequestQueue(getActivity()).add(stringRequest.setShouldCache(false));
+
     }
+//        json = getJSONFromInternet("https://sreekana123.000webhostapp.com/api/gethallcomplaints");
+//
+//        timer=new CountDownTimer(4000,300){
+//            Snackbar snack;
+//            @Override
+//            public void onTick(long millisUntilFinished) {
+//                if (gotJson) {
+//                    initializeFeatured(json);
+//                    initializeAdapter();
+//                    mSwipeRefreshLayout.setRefreshing(false);
+//
+//                }
+//            }
+//            @Override
+//            public void onFinish()
+//            {
+//                if(gotJson)
+//                {
+//                    initializeFeatured(json);
+//                    initializeAdapter();
+//                    mSwipeRefreshLayout.setRefreshing(false);
+//
+//                }
+//                else
+//                    snack=Snackbar.make(rv,"Cannot connect",Snackbar.LENGTH_INDEFINITE);
+//                snack.setAction("Refresh", new View.OnClickListener() {
+//                    @Override
+//                    public void onClick(View v) {
+//                        refreshview();
+//                    }
+//                });
+//                snack.show();
+//                mSwipeRefreshLayout.setRefreshing(false);
+//            }
+//        };
+//        timer.start();
+//        mSwipeRefreshLayout = (SwipeRefreshLayout)listv.findViewById(R.id.swiperefresh);
+//        mSwipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+//            @Override
+//            public void onRefresh() {
+//                gotJson=false;
+//                refreshview();
+//            }
+//        });
+//
+//        return listv;
+//    }
+//    public void initializeFeatured(JSONObject json){
+//        complaints = new ArrayList<Complaint>();
+//        try {
+//            JSONArray response = json.getJSONArray("hall");
+//
+//            for(int i=0;i<response.length();i++){
+//                JSONObject currentC = response.getJSONObject(i);
+//                String complaint_id = currentC.getString("complaint_id");
+//                String title = currentC.getString("title");
+//                String content = currentC.getString("content");
+//                String date = currentC.getString("date");
+//                String status = currentC.getString("status");
+//                String complaint_by = currentC.getString("complaint_by");
+//                int count = currentC.getInt("upvotes");
+////                int complaint_type = currentC.getInt("complaint_type");
+//                String image = currentC.getString("image");
+//
+//                Complaint comp = new Complaint(title,content,status,complaint_by,date,complaint_id,count,image);
+//                complaints.add(comp);
+//            }
+//
+//        } catch (JSONException e) {
+//            // If an error is thrown when executing any of the above statements in the "try" block,
+//            // catch the exception here, so the app doesn't crash. Print a log message
+//            // with the message from the exception.
+//            e.printStackTrace();
+//        }
+//    }
+//
+//    public void initializeAdapter(){
+//        RVAdapter adapter = new RVAdapter(complaints,this.getContext());
+//        rv.setAdapter(adapter);
+//        timer.cancel();
+//    }
+//
+//    public void refreshview()
+//    {
+//        json=getJSONFromInternet("https://sreekana123.000webhostapp.com/api/gethallcomplaints");
+//        timer.cancel();
+//        timer.start();
+//    }
+//    public JSONObject getJSONFromInternet(String url)
+//    {
+//
+//        JsonObjectRequest jsonRequest=new JsonObjectRequest(Request.Method.GET,url,null,
+//                new Response.Listener<JSONObject>() {
+//                    @Override
+//                    public void onResponse(JSONObject response) {
+//                        json=response;
+//                        gotJson=true;
+//                    }
+//                },
+//                new Response.ErrorListener(){
+//                    @Override
+//                    public void onErrorResponse(VolleyError error){
+//                        try {
+//                            json.put("success","false");
+//
+//                        } catch (JSONException e) {
+//                            e.printStackTrace();
+//                        }
+//                        error.printStackTrace();
+//                    }
+//                }){
+//                    @Override
+//                    protected Map<String, String> getParams() throws AuthFailureError {
+//                        Map<String, String> params = new HashMap<String, String>();
+//                        params.put("hall", hall);
+//                        Log.d("code", params.get("hall"));
+//                        return params;
+//                    }
+//        };
+//        Volley.newRequestQueue(getActivity()).add(jsonRequest.setShouldCache(false));
+//        return json;
+//    }
 }

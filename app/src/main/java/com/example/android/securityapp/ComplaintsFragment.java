@@ -86,16 +86,17 @@ public class ComplaintsFragment extends Fragment {
                     mSwipeRefreshLayout.setRefreshing(false);
 
                 }
-                else
-                    snack=Snackbar.make(rv,"Cannot connect",Snackbar.LENGTH_INDEFINITE);
+                else {
+                    snack = Snackbar.make(rv, "Cannot connect", Snackbar.LENGTH_INDEFINITE);
                     snack.setAction("Refresh", new View.OnClickListener() {
                         @Override
                         public void onClick(View v) {
                             refreshview();
                         }
                     });
-                snack.show();
-                mSwipeRefreshLayout.setRefreshing(false);
+                    snack.show();
+                    mSwipeRefreshLayout.setRefreshing(false);
+                }
             }
         };
         timer.start();
